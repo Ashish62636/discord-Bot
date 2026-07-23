@@ -1,0 +1,365 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Core Models ──────────────────────────────────────────────────────────────
+
+/// Discord guild registered with the bot
+model Guild {
+  id        String   @id /// Discord guild snowflake ID
+  name      String
+  ownerId   String
+  iconHash  String?
+  premium   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  config    GuildConfig?
+  members   GuildMember[]
+  tickets   Ticket[]
+  giveaways Giveaway[]
+  autoModRules AutoModRule[]
+  moderationLogs ModerationLog[]
+  reactionRoles  ReactionRole[]
+  tempRoles      TempRole[]
+  confessions    Confession[]
+  starboardEntries StarboardEntry[]
+  polls          Poll[]
+  outboxEvents   OutboxEvent[]
+  auditLogs      AuditLog[]
+  dashboardRoles DashboardRole[]
+
+  @@map("guilds")
+}
+
+/// Per-guild configuration with versioned cache invalidation
+model GuildConfig {
+  guildId          String   @id
+  guild            Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  // Channel assignments
+  logChannelId     String?
+  modLogChannelId  String?
+  welcomeChannelId String?
+  farewellChannelId String?  @map("farewell_channel_id")
+  ticketCategoryId String?
+  starboardChannelId String?
+  confessionChannelId String?
+  musicChannelId   String?
+  giveawayChannelId String?
+
+  // Prefix & locale
+  prefix    String @default("!")
+  locale    String @default("en")
+
+  // Cache versioning — monotonically increasing on every write
+  version   Int      @default(1)
+
+  // JSONB blob for per-module feature toggles (validated by Zod at runtime)
+  settings  Json     @default("{}")
+
+  updatedAt DateTime @updatedAt
+
+  @@map("guild_configs")
+}
+
+/// Guild member with XP tracking and profile data
+model GuildMember {
+  id             String    @id @default(cuid())
+  guildId        String
+  userId         String
+  xp             Int       @default(0)
+  level          Int       @default(0)
+  birthday       DateTime?
+  introSubmitted Boolean   @default(false)
+  joinedAt       DateTime  @default(now())
+
+  guild          Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  warnings       Warning[]
+
+  @@unique([guildId, userId])
+  @@index([guildId])
+  @@map("guild_members")
+}
+
+// ─── Moderation ───────────────────────────────────────────────────────────────
+
+/// Warning issued to a guild member
+model Warning {
+  id        String   @id @default(cuid())
+  guildId   String
+  memberId  String
+  issuerId  String
+  reason    String
+  createdAt DateTime @default(now())
+
+  member    GuildMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, memberId])
+  @@map("warnings")
+}
+
+/// Immutable moderation action log entry
+model ModerationLog {
+  id        String   @id @default(cuid())
+  guildId   String
+  actorId   String   /// Moderator or "automod"
+  targetId  String
+  action    String   /// "warn" | "kick" | "ban" | "timeout" | "delete" | "mute"
+  reason    String?
+  severity  String   @default("low") /// "low" | "medium" | "high"
+  createdAt DateTime @default(now())
+
+  guild     Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, createdAt])
+  @@index([guildId, targetId])
+  @@map("moderation_logs")
+}
+
+/// Auto-moderation rule configuration
+model AutoModRule {
+  id        String  @id @default(cuid())
+  guildId   String
+  trigger   String  /// "Spam" | "Caps" | "Links" | "Mentions" | "Profanity" | "Repeated Chars"
+  threshold String  /// Human-readable threshold, e.g. "5 msgs / 5s"
+  action    String  /// "Warn" | "Delete" | "Mute (1h)" | "Mute (24h)" | "Kick" | "Ban"
+  enabled   Boolean @default(true)
+  settings  Json    @default("{}")
+  createdAt DateTime @default(now())
+
+  guild     Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId])
+  @@map("auto_mod_rules")
+}
+
+// ─── Support Tickets ──────────────────────────────────────────────────────────
+
+model Ticket {
+  id          String    @id @default(cuid())
+  guildId     String
+  channelId   String?
+  openerId    String    /// Discord user ID who opened the ticket
+  subject     String
+  status      String    @default("open") /// "open" | "claimed" | "closed"
+  priority    String    @default("medium") /// "low" | "medium" | "high"
+  claimedBy   String?
+  createdAt   DateTime  @default(now())
+  closedAt    DateTime?
+
+  guild       Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  messages    TicketMessage[]
+
+  @@index([guildId, status])
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  authorId  String
+  content   String
+  isStaff   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  ticket    Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@map("ticket_messages")
+}
+
+// ─── Giveaways ────────────────────────────────────────────────────────────────
+
+model Giveaway {
+  id          String   @id @default(cuid())
+  guildId     String
+  channelId   String?
+  messageId   String?
+  prize       String
+  winnerCount Int      @default(1)
+  endsAt      DateTime
+  ended       Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  guild       Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  entries     GiveawayEntry[]
+
+  @@index([guildId, ended])
+  @@index([endsAt])
+  @@map("giveaways")
+}
+
+model GiveawayEntry {
+  id          String   @id @default(cuid())
+  giveawayId  String
+  userId      String
+  createdAt   DateTime @default(now())
+
+  giveaway    Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+
+  @@unique([giveawayId, userId])
+  @@map("giveaway_entries")
+}
+
+// ─── Engagement & Community ───────────────────────────────────────────────────
+
+model ReactionRole {
+  id        String @id @default(cuid())
+  guildId   String
+  messageId String
+  emoji     String
+  roleId    String
+
+  guild     Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, messageId, emoji])
+  @@map("reaction_roles")
+}
+
+model TempRole {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  roleId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  guild     Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("temp_roles")
+}
+
+model Poll {
+  id        String   @id @default(cuid())
+  guildId   String
+  channelId String?
+  question  String
+  options   Json     /// Array of option strings
+  endsAt    DateTime?
+  createdAt DateTime @default(now())
+
+  guild     Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  votes     PollVote[]
+
+  @@index([guildId])
+  @@map("polls")
+}
+
+model PollVote {
+  id        String   @id @default(cuid())
+  pollId    String
+  userId    String
+  optionIdx Int
+  createdAt DateTime @default(now())
+
+  poll      Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@map("poll_votes")
+}
+
+model Confession {
+  id        String   @id @default(cuid())
+  guildId   String
+  content   String
+  authorHash String  /// One-way hash of author ID for abuse investigation
+  status    String   @default("approved") /// "approved" | "pending" | "flagged"
+  createdAt DateTime @default(now())
+
+  guild     Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, createdAt])
+  @@map("confessions")
+}
+
+model StarboardEntry {
+  id            String   @id @default(cuid())
+  guildId       String
+  originalMsgId String
+  starboardMsgId String?
+  channelId     String
+  authorId      String
+  starCount     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  guild         Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, originalMsgId])
+  @@map("starboard_entries")
+}
+
+// ─── Transactional Outbox ─────────────────────────────────────────────────────
+
+/// Outbox pattern for reliable cross-service event delivery
+model OutboxEvent {
+  id            String   @id @default(cuid())
+  guildId       String
+  aggregateType String   /// "MEMBER_ACTION" | "GIVEAWAY" | "CONFIG" | "TICKET"
+  aggregateId   String
+  eventType     String   /// "KICK_USER" | "CLOSE_TICKET" | "UPDATE_ROLE" | "END_GIVEAWAY"
+  payload       Json
+  status        String   @default("PENDING") /// "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED"
+  retryCount    Int      @default(0)
+  lastError     String?
+  scheduledFor  DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  guild         Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduledFor])
+  @@map("outbox_events")
+}
+
+// ─── Dashboard-Only Tables ────────────────────────────────────────────────────
+
+/// Custom dashboard access roles (beyond Discord permissions)
+model DashboardRole {
+  id       String @id @default(cuid())
+  guildId  String
+  userId   String
+  role     String /// "owner" | "admin" | "moderator" | "viewer"
+
+  guild    Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, userId])
+  @@map("dashboard_roles")
+}
+
+/// Immutable audit trail for every dashboard config change
+model AuditLog {
+  id        String   @id @default(cuid())
+  guildId   String
+  actorId   String
+  action    String   /// Human-readable: "updated auto-mod settings", "closed ticket #123"
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  guild     Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, createdAt])
+  @@map("audit_logs")
+}
+
+/// User sessions backed by Discord OAuth2
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  accessToken  String   /// Encrypted Discord access token
+  refreshToken String?  /// Encrypted Discord refresh token
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@map("sessions")
+}

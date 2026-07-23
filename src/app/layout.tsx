@@ -26,6 +26,8 @@ export default function RootLayout({
           content="Production-ready Discord Bot Management Dashboard for GuildCraft.gg"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
       </head>
       <body className="bg-background text-content-primary font-sans antialiased min-h-screen flex flex-col">
         <div className="flex-1 flex overflow-hidden min-h-screen">

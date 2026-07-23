@@ -11,6 +11,9 @@ datasource db {
 }
 
 // ─── Core Models ──────────────────────────────────────────────────────────────
+// Bot-facing models use UUIDv7 (@default(dbgenerated("uuidv7()"))) for
+// time-ordered B-Tree inserts (see prisma/migrations/00_uuidv7_function.sql).
+// Dashboard-only models use cuid() per the architecture spec.
 
 /// Discord guild registered with the bot
 model Guild {
@@ -22,20 +25,23 @@ model Guild {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  config    GuildConfig?
-  members   GuildMember[]
-  tickets   Ticket[]
-  giveaways Giveaway[]
-  autoModRules AutoModRule[]
-  moderationLogs ModerationLog[]
-  reactionRoles  ReactionRole[]
-  tempRoles      TempRole[]
-  confessions    Confession[]
+  config           GuildConfig?
+  members          GuildMember[]
+  tickets          Ticket[]
+  giveaways        Giveaway[]
+  autoModRules     AutoModRule[]
+  moderationLogs   ModerationLog[]
+  reactionRoles    ReactionRole[]
+  tempRoles        TempRole[]
+  confessions      Confession[]
   starboardEntries StarboardEntry[]
-  polls          Poll[]
-  outboxEvents   OutboxEvent[]
-  auditLogs      AuditLog[]
-  dashboardRoles DashboardRole[]
+  polls            Poll[]
+  outboxEvents     OutboxEvent[]
+  recurringMessages RecurringMessage[]
+  feedback         Feedback[]
+  tempVoiceChannels TempVoiceChannel[]
+  auditLogs        AuditLog[]
+  dashboardRoles   DashboardRole[]
 
   @@map("guilds")
 }
@@ -73,7 +79,7 @@ model GuildConfig {
 
 /// Guild member with XP tracking and profile data
 model GuildMember {
-  id             String    @id @default(cuid())
+  id             String    @id @default(dbgenerated("uuidv7()"))
   guildId        String
   userId         String
   xp             Int       @default(0)
@@ -94,7 +100,7 @@ model GuildMember {
 
 /// Warning issued to a guild member
 model Warning {
-  id        String   @id @default(cuid())
+  id        String   @id @default(dbgenerated("uuidv7()"))
   guildId   String
   memberId  String
   issuerId  String
@@ -109,7 +115,7 @@ model Warning {
 
 /// Immutable moderation action log entry
 model ModerationLog {
-  id        String   @id @default(cuid())
+  id        String   @id @default(dbgenerated("uuidv7()"))
   guildId   String
   actorId   String   /// Moderator or "automod"
   targetId  String
@@ -127,7 +133,7 @@ model ModerationLog {
 
 /// Auto-moderation rule configuration
 model AutoModRule {
-  id        String  @id @default(cuid())
+  id        String  @id @default(dbgenerated("uuidv7()"))
   guildId   String
   trigger   String  /// "Spam" | "Caps" | "Links" | "Mentions" | "Profanity" | "Repeated Chars"
   threshold String  /// Human-readable threshold, e.g. "5 msgs / 5s"
@@ -145,7 +151,7 @@ model AutoModRule {
 // ─── Support Tickets ──────────────────────────────────────────────────────────
 
 model Ticket {
-  id          String    @id @default(cuid())
+  id          String    @id @default(dbgenerated("uuidv7()"))
   guildId     String
   channelId   String?
   openerId    String    /// Discord user ID who opened the ticket
@@ -164,7 +170,7 @@ model Ticket {
 }
 
 model TicketMessage {
-  id        String   @id @default(cuid())
+  id        String   @id @default(dbgenerated("uuidv7()"))
   ticketId  String
   authorId  String
   content   String
@@ -180,7 +186,7 @@ model TicketMessage {
 // ─── Giveaways ────────────────────────────────────────────────────────────────
 
 model Giveaway {
-  id          String   @id @default(cuid())
+  id          String   @id @default(dbgenerated("uuidv7()"))
   guildId     String
   channelId   String?
   messageId   String?
@@ -199,7 +205,7 @@ model Giveaway {
 }
 
 model GiveawayEntry {
-  id          String   @id @default(cuid())
+  id          String   @id @default(dbgenerated("uuidv7()"))
   giveawayId  String
   userId      String
   createdAt   DateTime @default(now())
@@ -213,7 +219,7 @@ model GiveawayEntry {
 // ─── Engagement & Community ───────────────────────────────────────────────────
 
 model ReactionRole {
-  id        String @id @default(cuid())
+  id        String @id @default(dbgenerated("uuidv7()"))
   guildId   String
   messageId String
   emoji     String
@@ -226,7 +232,7 @@ model ReactionRole {
 }
 
 model TempRole {
-  id        String   @id @default(cuid())
+  id        String   @id @default(dbgenerated("uuidv7()"))
   guildId   String
   userId    String
   roleId    String
@@ -240,7 +246,7 @@ model TempRole {
 }
 
 model Poll {
-  id        String   @id @default(cuid())
+  id        String   @id @default(dbgenerated("uuidv7()"))
   guildId   String
   channelId String?
   question  String
@@ -256,7 +262,7 @@ model Poll {
 }
 
 model PollVote {
-  id        String   @id @default(cuid())
+  id        String   @id @default(dbgenerated("uuidv7()"))
   pollId    String
   userId    String
   optionIdx Int
@@ -269,7 +275,7 @@ model PollVote {
 }
 
 model Confession {
-  id        String   @id @default(cuid())
+  id        String   @id @default(dbgenerated("uuidv7()"))
   guildId   String
   content   String
   authorHash String  /// One-way hash of author ID for abuse investigation
@@ -283,7 +289,7 @@ model Confession {
 }
 
 model StarboardEntry {
-  id            String   @id @default(cuid())
+  id            String   @id @default(dbgenerated("uuidv7()"))
   guildId       String
   originalMsgId String
   starboardMsgId String?
@@ -298,11 +304,61 @@ model StarboardEntry {
   @@map("starboard_entries")
 }
 
+// ─── Scheduled & Recurring ────────────────────────────────────────────────────
+
+/// Recurring messages (cron-scheduled, processed by worker)
+model RecurringMessage {
+  id        String   @id @default(dbgenerated("uuidv7()"))
+  guildId   String
+  channelId String
+  content   String   /// Message content or embed JSON
+  cronExpr  String   /// Cron expression, e.g. "0 9 * * 1" (Mon 9am)
+  timezone  String   @default("UTC")
+  enabled   Boolean  @default(true)
+  lastRunAt DateTime?
+  createdAt DateTime @default(now())
+
+  guild     Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId])
+  @@map("recurring_messages")
+}
+
+/// User feedback submissions
+model Feedback {
+  id        String   @id @default(dbgenerated("uuidv7()"))
+  guildId   String
+  userId    String
+  category  String   @default("general") /// "general" | "bug" | "suggestion" | "complaint"
+  content   String
+  status    String   @default("pending") /// "pending" | "reviewed" | "resolved"
+  createdAt DateTime @default(now())
+
+  guild     Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, createdAt])
+  @@map("feedback")
+}
+
+/// Temporary voice channels (join-to-create sessions)
+model TempVoiceChannel {
+  id        String   @id @default(dbgenerated("uuidv7()"))
+  guildId   String
+  channelId String   @unique /// Discord channel snowflake
+  ownerId   String   /// User who created the channel
+  createdAt DateTime @default(now())
+
+  guild     Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId])
+  @@map("temp_voice_channels")
+}
+
 // ─── Transactional Outbox ─────────────────────────────────────────────────────
 
 /// Outbox pattern for reliable cross-service event delivery
 model OutboxEvent {
-  id            String   @id @default(cuid())
+  id            String   @id @default(dbgenerated("uuidv7()"))
   guildId       String
   aggregateType String   /// "MEMBER_ACTION" | "GIVEAWAY" | "CONFIG" | "TICKET"
   aggregateId   String
@@ -322,6 +378,8 @@ model OutboxEvent {
 }
 
 // ─── Dashboard-Only Tables ────────────────────────────────────────────────────
+// These use cuid() per spec — they are low-volume, dashboard-scoped,
+// and don't benefit from time-ordered UUIDs.
 
 /// Custom dashboard access roles (beyond Discord permissions)
 model DashboardRole {

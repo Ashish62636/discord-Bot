@@ -5,6 +5,7 @@ import { inter, spaceGrotesk, jetbrainsMono } from "@/lib/fonts";
 import { NavigationRail } from "@/components/layout/NavigationRail";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { GuildProvider } from "@/hooks/use-guild";
 import "@/app/globals.css";
 
 export default function RootLayout({
@@ -30,24 +31,26 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/favicon.png" />
       </head>
       <body className="bg-background text-content-primary font-sans antialiased min-h-screen flex flex-col">
-        <div className="flex-1 flex overflow-hidden min-h-screen">
-          {/* Desktop Left Rail */}
-          <NavigationRail />
+        <GuildProvider>
+          <div className="flex-1 flex overflow-hidden min-h-screen">
+            {/* Desktop Left Rail */}
+            <NavigationRail />
 
-          {/* Mobile Drawer Navigation */}
-          <MobileNav
-            isOpen={mobileNavOpen}
-            onClose={() => setMobileNavOpen(false)}
-          />
+            {/* Mobile Drawer Navigation */}
+            <MobileNav
+              isOpen={mobileNavOpen}
+              onClose={() => setMobileNavOpen(false)}
+            />
 
-          {/* Main Area */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <TopHeader onOpenMobileNav={() => setMobileNavOpen(true)} />
-            <main className="flex-1 overflow-y-auto bg-background flex flex-col">
-              {children}
-            </main>
+            {/* Main Area */}
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+              <TopHeader onOpenMobileNav={() => setMobileNavOpen(true)} />
+              <main className="flex-1 overflow-y-auto bg-background flex flex-col">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
+        </GuildProvider>
       </body>
     </html>
   );

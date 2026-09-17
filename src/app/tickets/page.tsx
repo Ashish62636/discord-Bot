@@ -1,17 +1,36 @@
 "use client";
 
 import React, { useState } from "react";
-import { Ticket, Eye, CheckCircle2, MessageSquare, UserCheck, Lock, AlertCircle } from "lucide-react";
+import {
+  Ticket,
+  Eye,
+  CheckCircle2,
+  UserCheck,
+  Lock,
+} from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
-import { MOCK_TICKETS } from "@/lib/mock-data";
-import { TicketItem } from "@/types/dashboard";
-import { cn } from "@/lib/utils";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { TableRowSkeleton } from "@/components/ui/Skeletons";
+import { useTickets, type TicketApi } from "@/hooks/use-tickets";
+import { cn, formatDate } from "@/lib/utils";
 
 export default function TicketsPage() {
-  const [tickets, setTickets] = useState<TicketItem[]>(MOCK_TICKETS);
-  const [filter, setFilter] = useState<"all" | "open" | "claimed" | "closed">("all");
-  const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
+  const {
+    data: tickets,
+    isLoading,
+    error,
+    isFallback,
+    isMutating,
+    refetch,
+    claimTicket,
+    closeTicket,
+  } = useTickets();
+
+  const [filter, setFilter] = useState<"all" | "open" | "claimed" | "closed">(
+    "all"
+  );
+  const [selectedTicket, setSelectedTicket] = useState<TicketApi | null>(null);
   const [replyInput, setReplyInput] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -20,32 +39,30 @@ export default function TicketsPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const filteredTickets = tickets.filter(
+  const ticketsList = tickets ?? [];
+
+  const filteredTickets = ticketsList.filter(
     (t) => filter === "all" || t.status === filter
   );
 
-  const handleClaim = (id: string) => {
-    setTickets((ts) =>
-      ts.map((t) =>
-        t.id === id ? { ...t, status: "claimed", claimer: "radiantpeak" } : t
-      )
-    );
-    showToast(`Ticket #${id} claimed by @radiantpeak`);
+  const handleClaim = async (id: string) => {
+    await claimTicket(id);
+    showToast(`Ticket claimed by @radiantpeak`);
   };
 
-  const handleClose = (id: string) => {
-    setTickets((ts) =>
-      ts.map((t) => (t.id === id ? { ...t, status: "closed" } : t))
-    );
-    showToast(`Ticket #${id} has been closed`);
+  const handleClose = async (id: string) => {
+    await closeTicket(id);
+    showToast(`Ticket has been closed`);
     if (selectedTicket?.id === id) {
-      setSelectedTicket((prev) => (prev ? { ...prev, status: "closed" } : null));
+      setSelectedTicket((prev) =>
+        prev ? { ...prev, status: "closed" } : null
+      );
     }
   };
 
   const handleSendReply = () => {
     if (!replyInput.trim() || !selectedTicket) return;
-    showToast(`Staff response posted to Ticket #${selectedTicket.id}`);
+    showToast(`Staff response posted to Ticket #${selectedTicket.id.slice(0, 6)}`);
     setReplyInput("");
   };
 
@@ -65,6 +82,17 @@ export default function TicketsPage() {
         </div>
       )}
 
+      {/* Fallback Banner */}
+      {(error || isFallback) && (
+        <ErrorBanner
+          message={
+            error?.message ?? "Displaying cached demo data — API unreachable"
+          }
+          isFallback={isFallback}
+          onRetry={refetch}
+        />
+      )}
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl obsidian-panel px-5 py-5">
         <div>
@@ -73,7 +101,8 @@ export default function TicketsPage() {
             Support Ticket Center
           </h1>
           <p className="text-xs sm:text-sm text-content-secondary mt-1 font-sans">
-            Manage user inquiries, technical support tickets, and staff assignments.
+            Manage user inquiries, technical support tickets, and staff
+            assignments.
           </p>
         </div>
 
@@ -90,7 +119,11 @@ export default function TicketsPage() {
                   : "text-content-secondary hover:text-content-primary hover:bg-surface"
               )}
             >
-              {f} ({f === "all" ? tickets.length : tickets.filter((t) => t.status === f).length})
+              {f} (
+              {f === "all"
+                ? ticketsList.length
+                : ticketsList.filter((t) => t.status === f).length}
+              )
             </button>
           ))}
         </div>
@@ -99,72 +132,88 @@ export default function TicketsPage() {
       {/* Tickets Table */}
       <div className="rounded-xl overflow-hidden obsidian-panel">
         <div className="grid grid-cols-12 px-4 py-3 text-[10px] uppercase tracking-widest font-mono text-content-tertiary bg-card-subtle border-b border-surface-border">
-          <span className="col-span-2 sm:col-span-1">#ID</span>
-          <span className="col-span-3 sm:col-span-2">User</span>
+          <span className="col-span-2 sm:col-span-1">ID</span>
+          <span className="col-span-3 sm:col-span-2">Opener</span>
           <span className="col-span-4 sm:col-span-4">Subject</span>
           <span className="col-span-3 sm:col-span-2">Status</span>
-          <span className="hidden sm:block sm:col-span-2">Claimer</span>
+          <span className="hidden sm:block sm:col-span-2">Claimed By</span>
           <span className="col-span-3 sm:col-span-1 text-right">Actions</span>
         </div>
 
         <div className="divide-y divide-surface-subtleBorder">
-          {filteredTickets.map((t) => (
-            <div
-              key={t.id}
-              className="grid grid-cols-12 px-4 py-3.5 items-center transition-colors hover:bg-surface"
-            >
-              <div className="col-span-2 sm:col-span-1 font-mono text-xs text-content-tertiary font-bold">
-                #{t.id}
-              </div>
-
-              <div className="col-span-3 sm:col-span-2">
-                <span className="text-xs font-sans text-content-primary font-medium block truncate">
-                  @{t.user}
-                </span>
-                <span className="text-[10px] font-mono text-content-tertiary">
-                  {t.created}
-                </span>
-              </div>
-
-              <div className="col-span-4 sm:col-span-4 pr-2 truncate text-xs font-sans text-content-secondary">
-                {t.subject}
-              </div>
-
-              <div className="col-span-3 sm:col-span-2">
-                <Badge label={t.status} variant={statusVariant[t.status]} />
-              </div>
-
-              <div className="hidden sm:block sm:col-span-2 text-xs font-sans text-content-secondary">
-                {t.claimer ? `@${t.claimer}` : <span className="text-content-tertiary">—</span>}
-              </div>
-
-              <div className="col-span-3 sm:col-span-1 flex items-center justify-end gap-1.5">
-                {t.status === "open" && (
-                  <button
-                    onClick={() => handleClaim(t.id)}
-                    className="px-2 py-1 rounded bg-brand-amber/15 text-brand-amber hover:bg-brand-amber/25 text-[11px] font-heading font-medium transition-colors"
-                  >
-                    Claim
-                  </button>
-                )}
-                {t.status === "claimed" && (
-                  <button
-                    onClick={() => handleClose(t.id)}
-                    className="px-2 py-1 rounded bg-brand-red/15 text-brand-red hover:bg-brand-red/25 text-[11px] font-heading font-medium transition-colors"
-                  >
-                    Close
-                  </button>
-                )}
-                <button
-                  onClick={() => setSelectedTicket(t)}
-                  className="p-1.5 rounded-lg text-content-secondary hover:text-content-primary hover:bg-surface transition-colors"
-                  title="View details & transcript"
-                >
-                  <Eye size={15} />
-                </button>
-              </div>
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRowSkeleton key={i} />
+            ))
+          ) : filteredTickets.length === 0 ? (
+            <div className="px-4 py-8 text-center text-content-secondary text-sm font-sans">
+              No tickets found for this filter.
             </div>
-          ))}
+          ) : (
+            filteredTickets.map((t) => (
+              <div
+                key={t.id}
+                className="grid grid-cols-12 px-4 py-3.5 items-center transition-colors hover:bg-surface"
+              >
+                <div className="col-span-2 sm:col-span-1 font-mono text-xs text-content-tertiary font-bold truncate">
+                  {t.id.slice(0, 6)}
+                </div>
+
+                <div className="col-span-3 sm:col-span-2">
+                  <span className="text-xs font-sans text-content-primary font-medium block truncate">
+                    @{t.openerId}
+                  </span>
+                  <span className="text-[10px] font-mono text-content-tertiary">
+                    {formatDate(t.createdAt)}
+                  </span>
+                </div>
+
+                <div className="col-span-4 sm:col-span-4 pr-2 truncate text-xs font-sans text-content-secondary">
+                  {t.subject}
+                </div>
+
+                <div className="col-span-3 sm:col-span-2">
+                  <Badge label={t.status} variant={statusVariant[t.status]} />
+                </div>
+
+                <div className="hidden sm:block sm:col-span-2 text-xs font-sans text-content-secondary">
+                  {t.claimedBy ? (
+                    `@${t.claimedBy}`
+                  ) : (
+                    <span className="text-content-tertiary">—</span>
+                  )}
+                </div>
+
+                <div className="col-span-3 sm:col-span-1 flex items-center justify-end gap-1.5">
+                  {t.status === "open" && (
+                    <button
+                      onClick={() => handleClaim(t.id)}
+                      disabled={isMutating}
+                      className="px-2 py-1 rounded bg-brand-amber/15 text-brand-amber hover:bg-brand-amber/25 text-[11px] font-heading font-medium transition-colors disabled:opacity-50"
+                    >
+                      Claim
+                    </button>
+                  )}
+                  {t.status === "claimed" && (
+                    <button
+                      onClick={() => handleClose(t.id)}
+                      disabled={isMutating}
+                      className="px-2 py-1 rounded bg-brand-red/15 text-brand-red hover:bg-brand-red/25 text-[11px] font-heading font-medium transition-colors disabled:opacity-50"
+                    >
+                      Close
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedTicket(t)}
+                    className="p-1.5 rounded-lg text-content-secondary hover:text-content-primary hover:bg-surface transition-colors"
+                    title="View details & transcript"
+                  >
+                    <Eye size={15} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -173,25 +222,31 @@ export default function TicketsPage() {
         <Modal
           isOpen={!!selectedTicket}
           onClose={() => setSelectedTicket(null)}
-          title={`Support Ticket #${selectedTicket.id}`}
+          title={`Support Ticket #${selectedTicket.id.slice(0, 6)}`}
           maxWidth="lg"
         >
           <div className="space-y-4 font-sans text-xs">
             {/* Metadata Bar */}
             <div className="p-3 rounded-lg bg-surface border border-surface-border flex flex-wrap items-center justify-between gap-2">
               <div>
-                <span className="text-content-secondary">User: </span>
-                <span className="font-semibold text-content-primary">@{selectedTicket.user}</span>
+                <span className="text-content-secondary">Opener: </span>
+                <span className="font-semibold text-content-primary">
+                  @{selectedTicket.openerId}
+                </span>
                 <span className="text-content-tertiary mx-1.5">·</span>
                 <span className="text-content-secondary">Opened: </span>
-                <span className="font-mono text-content-primary">{selectedTicket.created}</span>
+                <span className="font-mono text-content-primary">
+                  {formatDate(selectedTicket.createdAt)}
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <Badge label={selectedTicket.status} variant={statusVariant[selectedTicket.status]} />
-                {selectedTicket.claimer && (
+                <Badge
+                  label={selectedTicket.status}
+                  variant={statusVariant[selectedTicket.status]}
+                />
+                {selectedTicket.claimedBy && (
                   <span className="text-brand-teal font-mono text-[11px] flex items-center gap-1">
-                    <UserCheck size={13} />
-                    @{selectedTicket.claimer}
+                    <UserCheck size={13} />@{selectedTicket.claimedBy}
                   </span>
                 )}
               </div>
@@ -201,28 +256,46 @@ export default function TicketsPage() {
               <h3 className="font-heading font-semibold text-content-primary text-sm mb-1">
                 Subject: {selectedTicket.subject}
               </h3>
+              {selectedTicket._count && (
+                <p className="text-content-tertiary font-mono text-[10px]">
+                  {selectedTicket._count.messages} message
+                  {selectedTicket._count.messages !== 1 ? "s" : ""} in
+                  transcript
+                </p>
+              )}
             </div>
 
             {/* Transcript Simulator */}
             <div className="border border-surface-border rounded-xl p-3 bg-card-subtle space-y-3 max-h-64 overflow-y-auto">
               <div className="bg-surface p-2.5 rounded-lg space-y-1">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-semibold text-content-primary">@{selectedTicket.user}</span>
-                  <span className="text-content-tertiary font-mono">{selectedTicket.created}</span>
+                  <span className="font-semibold text-content-primary">
+                    @{selectedTicket.openerId}
+                  </span>
+                  <span className="text-content-tertiary font-mono">
+                    {formatDate(selectedTicket.createdAt)}
+                  </span>
                 </div>
                 <p className="text-content-secondary leading-relaxed">
-                  Hi staff, I encountered an issue where {selectedTicket.subject.toLowerCase()}. Could someone take a look into this?
+                  Hi staff, I encountered an issue where{" "}
+                  {selectedTicket.subject.toLowerCase()}. Could someone take a
+                  look into this?
                 </p>
               </div>
 
               {selectedTicket.status !== "open" && (
                 <div className="bg-brand-amber/10 border border-brand-amber/20 p-2.5 rounded-lg space-y-1 ml-4">
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-semibold text-brand-amber">@{selectedTicket.claimer || "radiantpeak"} (Staff)</span>
-                    <span className="text-content-tertiary font-mono">14:02</span>
+                    <span className="font-semibold text-brand-amber">
+                      @{selectedTicket.claimedBy || "radiantpeak"} (Staff)
+                    </span>
+                    <span className="text-content-tertiary font-mono">
+                      14:02
+                    </span>
                   </div>
                   <p className="text-content-primary leading-relaxed">
-                    Hello @{selectedTicket.user}, I have claimed your ticket and verified your account permissions in database.
+                    Hello @{selectedTicket.openerId}, I have claimed your ticket
+                    and verified your account permissions in database.
                   </p>
                 </div>
               )}

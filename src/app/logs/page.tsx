@@ -1,9 +1,27 @@
 "use client";
 
 import React, { useState } from "react";
-import { ScrollText, Search, Shield, Activity, Lock, KeyRound, Download, CheckCircle2 } from "lucide-react";
-import { MOCK_MOD_LOGS, MOCK_ACTIVITY_LOGS, MOCK_CONFESSION_LOGS } from "@/lib/mock-data";
-import { cn } from "@/lib/utils";
+import {
+  ScrollText,
+  Search,
+  Shield,
+  Activity,
+  Lock,
+  KeyRound,
+  Download,
+  CheckCircle2,
+  ChevronDown,
+} from "lucide-react";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { TableRowSkeleton } from "@/components/ui/Skeletons";
+import {
+  useModLogs,
+  useActivityLogs,
+  type ModLogApi,
+  type ActivityLogApi,
+} from "@/hooks/use-mod-logs";
+import { MOCK_CONFESSION_LOGS } from "@/lib/mock-data";
+import { cn, formatDate } from "@/lib/utils";
 
 type LogTab = "moderation" | "activity" | "confessions";
 
@@ -13,6 +31,10 @@ export default function LogsPage() {
   const [unlockedConfessions, setUnlockedConfessions] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Live hooks — search is passed as a dependency so re-fetches on change
+  const modLogs = useModLogs(search);
+  const activityLogs = useActivityLogs(search);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -24,7 +46,9 @@ export default function LogsPage() {
       setUnlockedConfessions(true);
       showToast("Security Clearance Granted: Confession Logs Unlocked");
     } else {
-      showToast("Invalid Security PIN. Enter 1337 or any 4 digits to simulate.");
+      showToast(
+        "Invalid Security PIN. Enter 1337 or any 4 digits to simulate."
+      );
     }
   };
 
@@ -38,21 +62,11 @@ export default function LogsPage() {
     return "text-content-secondary";
   }
 
-  const filteredModLogs = MOCK_MOD_LOGS.filter(
-    (l) =>
-      !search ||
-      l.target.toLowerCase().includes(search.toLowerCase()) ||
-      l.mod.toLowerCase().includes(search.toLowerCase()) ||
-      l.action.toLowerCase().includes(search.toLowerCase()) ||
-      l.reason.toLowerCase().includes(search.toLowerCase())
-  );
+  // Select the active hook state for error/fallback banner
+  const activeState = tab === "moderation" ? modLogs : activityLogs;
 
-  const filteredActivityLogs = MOCK_ACTIVITY_LOGS.filter(
-    (l) =>
-      !search ||
-      l.user.toLowerCase().includes(search.toLowerCase()) ||
-      l.event.toLowerCase().includes(search.toLowerCase())
-  );
+  const modLogsList: ModLogApi[] = modLogs.data?.logs ?? [];
+  const activityLogsList: ActivityLogApi[] = activityLogs.data?.logs ?? [];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
@@ -64,6 +78,18 @@ export default function LogsPage() {
         </div>
       )}
 
+      {/* Fallback Banner */}
+      {tab !== "confessions" && (activeState.error || activeState.isFallback) && (
+        <ErrorBanner
+          message={
+            activeState.error?.message ??
+            "Displaying cached demo data — API unreachable"
+          }
+          isFallback={activeState.isFallback}
+          onRetry={activeState.refetch}
+        />
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl obsidian-panel px-5 py-5">
         <div>
@@ -72,7 +98,8 @@ export default function LogsPage() {
             Server Audit & Security Logs
           </h1>
           <p className="text-xs sm:text-sm text-content-secondary mt-1 font-sans">
-            Centralized telemetry for moderation enforcement, user join/leaves, and anonymous confessions.
+            Centralized telemetry for moderation enforcement, user join/leaves,
+            and anonymous confessions.
           </p>
         </div>
 
@@ -157,29 +184,59 @@ export default function LogsPage() {
           </div>
 
           <div className="divide-y divide-surface-subtleBorder">
-            {filteredModLogs.map((l, i) => (
-              <div
-                key={i}
-                className="grid grid-cols-12 px-4 py-3.5 items-center transition-colors hover:bg-surface"
-              >
-                <div className="col-span-2 sm:col-span-2 font-mono text-xs text-content-tertiary">
-                  {l.time}
-                </div>
-                <div className="col-span-3 sm:col-span-2 font-sans text-xs text-content-secondary">
-                  @{l.mod}
-                </div>
-                <div className="col-span-3 sm:col-span-2 font-sans text-xs font-medium text-content-primary">
-                  @{l.target}
-                </div>
-                <div className={cn("col-span-4 sm:col-span-3 font-heading text-xs", severityColor(l.severity))}>
-                  {l.action}
-                </div>
-                <div className="hidden sm:block sm:col-span-3 font-mono text-xs text-content-secondary truncate">
-                  {l.reason}
-                </div>
+            {modLogs.isLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <TableRowSkeleton key={i} />
+              ))
+            ) : modLogsList.length === 0 ? (
+              <div className="px-4 py-8 text-center text-content-secondary text-sm font-sans">
+                No moderation logs found
+                {search ? ` matching "${search}"` : ""}.
               </div>
-            ))}
+            ) : (
+              modLogsList.map((l) => (
+                <div
+                  key={l.id}
+                  className="grid grid-cols-12 px-4 py-3.5 items-center transition-colors hover:bg-surface"
+                >
+                  <div className="col-span-2 sm:col-span-2 font-mono text-xs text-content-tertiary">
+                    {formatDate(l.createdAt)}
+                  </div>
+                  <div className="col-span-3 sm:col-span-2 font-sans text-xs text-content-secondary">
+                    @{l.actorId}
+                  </div>
+                  <div className="col-span-3 sm:col-span-2 font-sans text-xs font-medium text-content-primary">
+                    @{l.targetId}
+                  </div>
+                  <div
+                    className={cn(
+                      "col-span-4 sm:col-span-3 font-heading text-xs",
+                      severityColor(l.severity)
+                    )}
+                  >
+                    {l.action}
+                  </div>
+                  <div className="hidden sm:block sm:col-span-3 font-mono text-xs text-content-secondary truncate">
+                    {l.reason ?? "—"}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
+
+          {/* Load More */}
+          {modLogs.data?.pagination.hasMore && (
+            <div className="px-4 py-3 border-t border-surface-border flex justify-center">
+              <button
+                onClick={modLogs.loadMore}
+                disabled={modLogs.isLoadingMore}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-xs font-heading font-medium text-content-primary hover:bg-card transition-colors disabled:opacity-50"
+              >
+                <ChevronDown size={14} />
+                {modLogs.isLoadingMore ? "Loading…" : "Load more"}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -188,36 +245,57 @@ export default function LogsPage() {
         <div className="rounded-xl overflow-hidden obsidian-panel">
           <div className="grid grid-cols-12 px-4 py-3 text-[10px] uppercase tracking-widest font-mono text-content-tertiary bg-card-subtle border-b border-surface-border">
             <span className="col-span-3 sm:col-span-2">Time</span>
-            <span className="col-span-3 sm:col-span-3">User</span>
-            <span className="col-span-4 sm:col-span-5">Event Description</span>
-            <span className="col-span-2 sm:col-span-2">Channel</span>
+            <span className="col-span-3 sm:col-span-3">Actor</span>
+            <span className="col-span-6 sm:col-span-7">Event Description</span>
           </div>
 
           <div className="divide-y divide-surface-subtleBorder">
-            {filteredActivityLogs.map((l, i) => (
-              <div
-                key={i}
-                className="grid grid-cols-12 px-4 py-3.5 items-center transition-colors hover:bg-surface"
-              >
-                <div className="col-span-3 sm:col-span-2 font-mono text-xs text-content-tertiary">
-                  {l.time}
-                </div>
-                <div className="col-span-3 sm:col-span-3 font-sans text-xs text-content-primary font-medium">
-                  @{l.user}
-                </div>
-                <div className="col-span-4 sm:col-span-5 font-sans text-xs text-content-secondary">
-                  {l.event}
-                </div>
-                <div className="col-span-2 sm:col-span-2 font-mono text-xs text-brand-amber">
-                  {l.channel}
-                </div>
+            {activityLogs.isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <TableRowSkeleton key={i} />
+              ))
+            ) : activityLogsList.length === 0 ? (
+              <div className="px-4 py-8 text-center text-content-secondary text-sm font-sans">
+                No activity logs found
+                {search ? ` matching "${search}"` : ""}.
               </div>
-            ))}
+            ) : (
+              activityLogsList.map((l) => (
+                <div
+                  key={l.id}
+                  className="grid grid-cols-12 px-4 py-3.5 items-center transition-colors hover:bg-surface"
+                >
+                  <div className="col-span-3 sm:col-span-2 font-mono text-xs text-content-tertiary">
+                    {formatDate(l.createdAt)}
+                  </div>
+                  <div className="col-span-3 sm:col-span-3 font-sans text-xs text-content-primary font-medium">
+                    @{l.actorId}
+                  </div>
+                  <div className="col-span-6 sm:col-span-7 font-sans text-xs text-content-secondary">
+                    {l.action}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
+
+          {/* Load More */}
+          {activityLogs.data?.pagination.hasMore && (
+            <div className="px-4 py-3 border-t border-surface-border flex justify-center">
+              <button
+                onClick={activityLogs.loadMore}
+                disabled={activityLogs.isLoadingMore}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface text-xs font-heading font-medium text-content-primary hover:bg-card transition-colors disabled:opacity-50"
+              >
+                <ChevronDown size={14} />
+                {activityLogs.isLoadingMore ? "Loading…" : "Load more"}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Tab Content 3: Confession Logs (Security Gated) */}
+      {/* Tab Content 3: Confession Logs (Security Gated — still local-only) */}
       {tab === "confessions" && (
         <div className="space-y-4">
           {!unlockedConfessions ? (
@@ -230,7 +308,8 @@ export default function LogsPage() {
                   Owner Security Clearance Required
                 </h2>
                 <p className="text-xs text-content-secondary mt-1 leading-relaxed">
-                  Confession logs store encrypted original author metadata for abuse investigation. Enter authorization PIN to proceed.
+                  Confession logs store encrypted original author metadata for
+                  abuse investigation. Enter authorization PIN to proceed.
                 </p>
               </div>
 
@@ -240,7 +319,9 @@ export default function LogsPage() {
                   placeholder="PIN (e.g. 1337)"
                   value={pinInput}
                   onChange={(e) => setPinInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleUnlockConfessions()}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && handleUnlockConfessions()
+                  }
                   className="flex-1 px-3 py-2 rounded-lg bg-surface border border-surface-border text-center font-mono text-content-primary outline-none focus:border-brand-purple"
                 />
                 <button
@@ -254,19 +335,28 @@ export default function LogsPage() {
           ) : (
             <div className="rounded-xl overflow-hidden obsidian-panel">
               <div className="px-4 py-3 bg-brand-purple/10 border-b border-brand-purple/20 flex items-center justify-between text-xs text-brand-purple font-mono">
-                <span>SECURITY CLEARANCE ACTIVE · ENCRYPTED CONFESSIONS LOG</span>
+                <span>
+                  SECURITY CLEARANCE ACTIVE · ENCRYPTED CONFESSIONS LOG
+                </span>
                 <span>SHA-256 HASH VERIFIED</span>
               </div>
 
               <div className="divide-y divide-surface-subtleBorder">
                 {MOCK_CONFESSION_LOGS.map((c) => (
-                  <div key={c.id} className="p-4 space-y-2 hover:bg-surface transition-colors">
+                  <div
+                    key={c.id}
+                    className="p-4 space-y-2 hover:bg-surface transition-colors"
+                  >
                     <div className="flex items-center justify-between text-xs font-mono">
-                      <span className="text-brand-amber font-bold">{c.id}</span>
-                      <span className="text-content-tertiary">{c.time} · Hash: {c.hash}</span>
+                      <span className="text-brand-amber font-bold">
+                        {c.id}
+                      </span>
+                      <span className="text-content-tertiary">
+                        {c.time} · Hash: {c.hash}
+                      </span>
                     </div>
                     <p className="text-xs text-content-primary font-sans leading-relaxed">
-                      "{c.content}"
+                      &ldquo;{c.content}&rdquo;
                     </p>
                   </div>
                 ))}

@@ -27,8 +27,8 @@ function getActivityIcon(type: ActivityLogItem["type"]) {
 
 export const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities }) => {
   return (
-    <div className="rounded-xl overflow-hidden bg-card border border-surface-border">
-      <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between bg-card-subtle">
+    <div className="rounded-xl overflow-hidden obsidian-panel">
+      <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between bg-[#0f172b]">
         <h2 className="text-xs uppercase tracking-widest font-heading font-semibold text-content-secondary">
           Recent Activity
         </h2>
@@ -42,7 +42,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities }) => {
         {activities.map((item) => (
           <div
             key={item.id}
-            className="px-4 py-3 flex items-start gap-3 transition-colors hover:bg-surface"
+            className="px-4 py-3 flex items-start gap-3 transition-colors hover:bg-white/[.035]"
           >
             <div className="mt-0.5 flex-shrink-0 p-1 rounded-md bg-surface">
               {getActivityIcon(item.type)}

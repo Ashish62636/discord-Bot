@@ -101,7 +101,7 @@ export default function AutoModPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl obsidian-panel px-5 py-5">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold font-heading text-content-primary flex items-center gap-2">
             <ShieldAlert className="text-brand-amber" size={24} />
@@ -130,7 +130,7 @@ export default function AutoModPage() {
       </div>
 
       {/* Rules Table Container */}
-      <div className="rounded-xl overflow-hidden bg-card border border-surface-border shadow-xl">
+      <div className="rounded-xl overflow-hidden obsidian-panel">
         {/* Table Header */}
         <div className="grid grid-cols-12 px-4 py-3 text-[10px] uppercase tracking-widest font-mono text-content-tertiary bg-card-subtle border-b border-surface-border">
           <span className="col-span-3 sm:col-span-3">Trigger</span>
@@ -199,7 +199,7 @@ export default function AutoModPage() {
       </div>
 
       {/* Exempt Channels Section */}
-      <div className="bg-card border border-surface-border rounded-xl p-5 space-y-4">
+      <div className="obsidian-panel rounded-xl p-5 space-y-4">
         <div>
           <h2 className="text-sm font-semibold font-heading text-content-primary">
             Exempt Channels &amp; Bypasses
@@ -263,7 +263,7 @@ export default function AutoModPage() {
             <select
               value={newTrigger}
               onChange={(e) => setNewTrigger(e.target.value)}
-              className="w-full bg-surface border border-surface-border text-content-primary rounded-lg p-2.5 outline-none font-heading"
+              className="w-full obsidian-input border text-content-primary rounded-lg p-2.5 outline-none font-heading"
             >
               {TRIGGERS.map((t) => (
                 <option key={t} value={t} className="bg-card">
@@ -281,7 +281,7 @@ export default function AutoModPage() {
               type="text"
               value={newThreshold}
               onChange={(e) => setNewThreshold(e.target.value)}
-              className="w-full bg-surface border border-surface-border text-content-primary rounded-lg p-2.5 outline-none font-mono"
+              className="w-full obsidian-input border text-content-primary rounded-lg p-2.5 outline-none font-mono"
             />
           </div>
 
@@ -292,7 +292,7 @@ export default function AutoModPage() {
             <select
               value={newAction}
               onChange={(e) => setNewAction(e.target.value)}
-              className="w-full bg-surface border border-surface-border text-content-primary rounded-lg p-2.5 outline-none font-mono"
+              className="w-full obsidian-input border text-content-primary rounded-lg p-2.5 outline-none font-mono"
             >
               {ACTIONS_LIST.map((a) => (
                 <option key={a} value={a} className="bg-card">

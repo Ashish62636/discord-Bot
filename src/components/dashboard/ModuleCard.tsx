@@ -20,9 +20,9 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
   return (
     <div
       className={cn(
-        "rounded-xl p-3.5 flex flex-col justify-between gap-3 transition-all duration-200 border",
+        "rounded-xl p-3.5 flex flex-col justify-between gap-3 transition-all duration-200 border hover:-translate-y-0.5",
         isOn
-          ? "bg-card border-brand-amber/20 shadow-[0_0_15px_rgba(242,169,59,0.04)]"
+          ? "obsidian-panel border-brand-amber/35 shadow-[0_12px_28px_rgba(0,0,0,.14)]"
           : "bg-card-subtle border-surface-subtleBorder opacity-80 hover:opacity-100"
       )}
     >

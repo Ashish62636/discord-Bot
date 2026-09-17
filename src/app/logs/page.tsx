@@ -65,7 +65,7 @@ export default function LogsPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl obsidian-panel px-5 py-5">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold font-heading text-content-primary flex items-center gap-2">
             <ScrollText className="text-brand-amber" size={24} />
@@ -147,7 +147,7 @@ export default function LogsPage() {
 
       {/* Tab Content 1: Moderation Logs */}
       {tab === "moderation" && (
-        <div className="rounded-xl overflow-hidden bg-card border border-surface-border shadow-xl">
+        <div className="rounded-xl overflow-hidden obsidian-panel">
           <div className="grid grid-cols-12 px-4 py-3 text-[10px] uppercase tracking-widest font-mono text-content-tertiary bg-card-subtle border-b border-surface-border">
             <span className="col-span-2 sm:col-span-2">Time</span>
             <span className="col-span-3 sm:col-span-2">Moderator</span>
@@ -185,7 +185,7 @@ export default function LogsPage() {
 
       {/* Tab Content 2: Activity Logs */}
       {tab === "activity" && (
-        <div className="rounded-xl overflow-hidden bg-card border border-surface-border shadow-xl">
+        <div className="rounded-xl overflow-hidden obsidian-panel">
           <div className="grid grid-cols-12 px-4 py-3 text-[10px] uppercase tracking-widest font-mono text-content-tertiary bg-card-subtle border-b border-surface-border">
             <span className="col-span-3 sm:col-span-2">Time</span>
             <span className="col-span-3 sm:col-span-3">User</span>
@@ -252,7 +252,7 @@ export default function LogsPage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-xl overflow-hidden bg-card border border-surface-border shadow-xl">
+            <div className="rounded-xl overflow-hidden obsidian-panel">
               <div className="px-4 py-3 bg-brand-purple/10 border-b border-brand-purple/20 flex items-center justify-between text-xs text-brand-purple font-mono">
                 <span>SECURITY CLEARANCE ACTIVE · ENCRYPTED CONFESSIONS LOG</span>
                 <span>SHA-256 HASH VERIFIED</span>

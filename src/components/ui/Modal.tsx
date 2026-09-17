@@ -46,7 +46,7 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         className={cn(
-          "w-full rounded-xl bg-card border border-surface-border p-6 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-200",
+          "w-full rounded-xl obsidian-panel p-6 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-200",
           maxWidthClasses[maxWidth]
         )}
       >

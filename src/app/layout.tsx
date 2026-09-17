@@ -45,7 +45,7 @@ export default function RootLayout({
             {/* Main Area */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
               <TopHeader onOpenMobileNav={() => setMobileNavOpen(true)} />
-              <main className="flex-1 overflow-y-auto bg-background flex flex-col">
+              <main className="flex-1 overflow-y-auto bg-[linear-gradient(rgba(120,150,215,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(120,150,215,.035)_1px,transparent_1px),radial-gradient(circle_at_78%_-12%,rgba(147,129,255,.14),transparent_28rem)] bg-[size:28px_28px,28px_28px,auto] bg-background flex flex-col">
                 {children}
               </main>
             </div>

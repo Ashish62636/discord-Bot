@@ -64,7 +64,7 @@ export default function GiveawaysPage() {
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl obsidian-panel px-5 py-5">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold font-heading text-content-primary flex items-center gap-2">
             <Gift className="text-brand-amber" size={24} />
@@ -121,7 +121,7 @@ export default function GiveawaysPage() {
           {activeGiveaways.map((gw) => (
             <div
               key={gw.id}
-              className="bg-card border border-surface-border rounded-xl p-5 space-y-4 hover:border-brand-amber/30 transition-all shadow-xl"
+              className="obsidian-panel rounded-xl p-5 space-y-4 hover:border-brand-amber/40 hover:-translate-y-0.5 transition-all"
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -165,7 +165,7 @@ export default function GiveawaysPage() {
 
       {/* Tab 2: Ended Giveaways List */}
       {tab === "ended" && (
-        <div className="rounded-xl overflow-hidden bg-card border border-surface-border shadow-xl">
+        <div className="rounded-xl overflow-hidden obsidian-panel">
           <div className="grid grid-cols-12 px-4 py-3 text-[10px] uppercase tracking-widest font-mono text-content-tertiary bg-card-subtle border-b border-surface-border">
             <span className="col-span-4 sm:col-span-4">Prize</span>
             <span className="col-span-3 sm:col-span-3">Channel</span>

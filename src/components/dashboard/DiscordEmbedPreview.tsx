@@ -9,9 +9,9 @@ export interface DiscordEmbedPreviewProps {
 
 export const DiscordEmbedPreview: React.FC<DiscordEmbedPreviewProps> = ({ embed }) => {
   return (
-    <div className="w-full max-w-md rounded-xl overflow-hidden bg-[#36393F] border border-surface-border text-white shadow-2xl font-sans">
+    <div className="w-full max-w-md rounded-xl overflow-hidden bg-[#313338] border border-black/40 text-white shadow-[0_18px_45px_rgba(0,0,0,.3)] font-sans">
       {/* Discord Header Chrome */}
-      <div className="px-4 py-2.5 bg-[#2F3136] border-b border-[#202225] flex items-center justify-between text-xs text-[#8E9297] font-mono">
+      <div className="px-4 py-2.5 bg-[#1e1f22] border-b border-black/30 flex items-center justify-between text-xs text-[#b5bac1] font-mono">
         <span># {embed.channel || "announcements"}</span>
         <span className="text-[10px] bg-[#202225] px-1.5 py-0.5 rounded">Preview</span>
       </div>
@@ -20,7 +20,7 @@ export const DiscordEmbedPreview: React.FC<DiscordEmbedPreviewProps> = ({ embed 
       <div className="p-4 space-y-3">
         {/* Author / Bot Profile Header */}
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-amber to-amber-600 font-heading font-bold text-background flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7983f5] to-brand-amber font-heading font-bold text-white flex items-center justify-center text-sm shadow-sm flex-shrink-0">
             B
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -38,7 +38,7 @@ export const DiscordEmbedPreview: React.FC<DiscordEmbedPreviewProps> = ({ embed 
 
         {/* The Embed Body */}
         <div
-          className="rounded bg-[#2F3136] p-3 text-sm space-y-2 border-l-4 transition-all duration-300"
+          className="rounded bg-[#2b2d31] p-3 text-sm space-y-2 border-l-4 transition-all duration-300"
           style={{ borderColor: embed.color || "#F2A93B" }}
         >
           {embed.author && (

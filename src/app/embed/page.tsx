@@ -42,7 +42,7 @@ export default function EmbedBuilderPage() {
       )}
 
       {/* Page Header */}
-      <div className="border-b border-surface-border pb-4">
+      <div className="rounded-2xl obsidian-panel px-5 py-5">
         <h1 className="text-xl sm:text-2xl font-bold font-heading text-content-primary flex items-center gap-2">
           <Code2 className="text-brand-amber" size={24} />
           Rich Embed Builder
@@ -55,7 +55,7 @@ export default function EmbedBuilderPage() {
       {/* Main Builder Layout: Split View */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Form Controls Column (7 cols) */}
-        <div className="lg:col-span-7 bg-card border border-surface-border rounded-xl p-5 space-y-5 shadow-xl">
+        <div className="lg:col-span-7 obsidian-panel rounded-xl p-5 space-y-5">
           <div className="flex items-center justify-between border-b border-surface-border pb-3">
             <h2 className="text-sm font-semibold font-heading text-content-primary flex items-center gap-1.5">
               <Sparkles size={16} className="text-brand-amber" />
@@ -76,7 +76,7 @@ export default function EmbedBuilderPage() {
                 type="text"
                 value={form.title}
                 onChange={(e) => update("title", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-surface border border-surface-border text-content-primary outline-none focus:border-brand-amber transition-colors"
+                className="w-full px-3 py-2 rounded-lg obsidian-input border text-content-primary outline-none transition-colors"
               />
             </div>
 
@@ -90,7 +90,7 @@ export default function EmbedBuilderPage() {
                   type="text"
                   value={form.author}
                   onChange={(e) => update("author", e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-surface border border-surface-border text-content-primary outline-none focus:border-brand-amber transition-colors"
+                  className="w-full px-3 py-2 rounded-lg obsidian-input border text-content-primary outline-none transition-colors"
                 />
               </div>
               <div>
@@ -100,7 +100,7 @@ export default function EmbedBuilderPage() {
                 <select
                   value={form.channel}
                   onChange={(e) => update("channel", e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-surface border border-surface-border text-content-primary outline-none focus:border-brand-amber font-mono transition-colors"
+                  className="w-full px-3 py-2 rounded-lg obsidian-input border text-content-primary outline-none font-mono transition-colors"
                 >
                   <option value="announcements"># announcements</option>
                   <option value="general"># general</option>
@@ -119,7 +119,7 @@ export default function EmbedBuilderPage() {
                 rows={5}
                 value={form.description}
                 onChange={(e) => update("description", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-surface border border-surface-border text-content-primary outline-none focus:border-brand-amber transition-colors resize-none leading-relaxed"
+                className="w-full px-3 py-2 rounded-lg obsidian-input border text-content-primary outline-none transition-colors resize-none leading-relaxed"
               />
             </div>
 
@@ -132,7 +132,7 @@ export default function EmbedBuilderPage() {
                 type="text"
                 value={form.footer}
                 onChange={(e) => update("footer", e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-surface border border-surface-border text-content-primary outline-none focus:border-brand-amber transition-colors"
+                className="w-full px-3 py-2 rounded-lg obsidian-input border text-content-primary outline-none transition-colors"
               />
             </div>
 

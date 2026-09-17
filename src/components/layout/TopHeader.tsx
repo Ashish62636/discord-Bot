@@ -27,7 +27,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenMobileNav }) => {
   };
 
   return (
-    <header className="h-14 border-b border-surface-border bg-background/80 backdrop-blur px-4 md:px-6 flex items-center justify-between z-10 sticky top-0">
+    <header className="h-16 border-b border-surface-border bg-[#0d1426]/90 backdrop-blur-xl px-4 md:px-7 flex items-center justify-between z-10 sticky top-0 shadow-[0_2px_0_rgba(255,255,255,.025)]">
       <div className="flex items-center gap-3">
         <button
           onClick={onOpenMobileNav}
@@ -45,18 +45,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenMobileNav }) => {
           >
             <div>
               <h1 className="text-base font-semibold font-heading text-content-primary leading-tight group-hover:text-brand-amber transition-colors flex items-center gap-1.5">
-                BotHQ
+                BotHQ <span className="hidden sm:inline text-content-tertiary font-normal">/</span>
                 <ChevronDown size={14} className="text-content-secondary group-hover:text-brand-amber transition-transform duration-200" />
               </h1>
               <p className="text-[11px] text-content-secondary font-sans leading-tight">
-                {activeGuild} · 4,218 members
+                {activeGuild} · systems online
               </p>
             </div>
           </button>
 
           {/* Guild Dropdown */}
           {guildDropdownOpen && (
-            <div className="absolute top-12 left-0 w-56 rounded-xl bg-card border border-surface-border p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute top-12 left-0 w-56 rounded-xl bg-[#0d1426] border border-surface-border p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="text-[10px] uppercase font-mono text-content-tertiary px-2 py-1 tracking-wider">
                 Select Server
               </div>
@@ -70,7 +70,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenMobileNav }) => {
                   className={cn(
                     "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-sans transition-colors",
                     g.name === activeGuild
-                      ? "bg-brand-amber/15 text-brand-amber font-medium"
+                      ? "bg-brand-amber text-white font-medium"
                       : "text-content-secondary hover:text-content-primary hover:bg-surface"
                   )}
                 >
@@ -78,7 +78,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenMobileNav }) => {
                     <div className="font-medium text-left">{g.name}</div>
                     <div className="text-[10px] text-content-tertiary">{g.members}</div>
                   </div>
-                  {g.name === activeGuild && <Check size={14} className="text-brand-amber" />}
+                  {g.name === activeGuild && <Check size={14} className="text-white" />}
                 </button>
               ))}
             </div>
@@ -110,7 +110,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenMobileNav }) => {
         </button>
 
         {/* Status Pill */}
-        <div className="text-xs px-2.5 py-1 rounded-md flex items-center gap-1.5 bg-brand-amber/10 border border-brand-amber/20 text-brand-amber font-mono">
+        <div className="text-xs px-2.5 py-1 rounded-md flex items-center gap-1.5 bg-brand-teal/10 border border-brand-teal/20 text-brand-teal font-mono">
           <StatusDot on={true} />
           <span>online</span>
         </div>

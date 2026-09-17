@@ -66,7 +66,7 @@ export default function TicketsPage() {
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl obsidian-panel px-5 py-5">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold font-heading text-content-primary flex items-center gap-2">
             <Ticket className="text-brand-amber" size={24} />
@@ -97,7 +97,7 @@ export default function TicketsPage() {
       </div>
 
       {/* Tickets Table */}
-      <div className="rounded-xl overflow-hidden bg-card border border-surface-border shadow-xl">
+      <div className="rounded-xl overflow-hidden obsidian-panel">
         <div className="grid grid-cols-12 px-4 py-3 text-[10px] uppercase tracking-widest font-mono text-content-tertiary bg-card-subtle border-b border-surface-border">
           <span className="col-span-2 sm:col-span-1">#ID</span>
           <span className="col-span-3 sm:col-span-2">User</span>
@@ -241,7 +241,7 @@ export default function TicketsPage() {
                     value={replyInput}
                     onChange={(e) => setReplyInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSendReply()}
-                    className="flex-1 px-3 py-2 rounded-lg bg-surface border border-surface-border text-content-primary outline-none focus:border-brand-amber"
+                    className="flex-1 px-3 py-2 rounded-lg obsidian-input border text-content-primary outline-none"
                   />
                   <button
                     onClick={handleSendReply}

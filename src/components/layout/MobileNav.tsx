@@ -44,10 +44,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
       />
 
       {/* Drawer */}
-      <div className="relative w-64 max-w-[80vw] bg-sidebar border-r border-surface-border p-4 flex flex-col gap-4 z-10 animate-in slide-in-from-left duration-200">
+      <div className="relative w-72 max-w-[84vw] bg-[#0d1426] border-r border-surface-border p-4 flex flex-col gap-4 z-10 animate-in slide-in-from-left duration-200 shadow-[12px_0_36px_rgba(0,0,0,.35)]">
         <div className="flex items-center justify-between border-b border-surface-border pb-3">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-amber to-amber-600 text-background font-heading font-bold flex items-center justify-center text-xs">
+            <div className="w-8 h-8 rounded-[11px] bg-gradient-to-br from-brand-amber to-[#1a9fca] text-[#07131b] font-heading font-bold flex items-center justify-center text-xs shadow-glow">
               B
             </div>
             <span className="font-heading font-semibold text-content-primary">
@@ -74,7 +74,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-sans transition-colors",
                   isActive
-                    ? "bg-brand-amber/15 text-brand-amber font-medium border border-brand-amber/20"
+                    ? "bg-brand-amber text-white font-medium shadow-glow"
                     : "text-content-secondary hover:text-content-primary hover:bg-surface"
                 )}
               >

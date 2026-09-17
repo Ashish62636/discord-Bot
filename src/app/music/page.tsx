@@ -84,7 +84,7 @@ export default function MusicPlayerPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl obsidian-panel px-5 py-5">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold font-heading text-content-primary flex items-center gap-2">
             <Music2 className="text-brand-amber" size={24} />
@@ -108,7 +108,7 @@ export default function MusicPlayerPage() {
       {/* Main Grid: Player Controller + Queue */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Now Playing Audio Controller (5 cols) */}
-        <div className="lg:col-span-5 bg-card border border-surface-border rounded-xl p-6 space-y-6 shadow-2xl">
+        <div className="lg:col-span-5 obsidian-panel rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between text-xs font-mono text-content-tertiary">
             <span className="uppercase tracking-widest font-heading font-semibold text-content-secondary">
               Now Playing in #general-voice
@@ -201,7 +201,7 @@ export default function MusicPlayerPage() {
         </div>
 
         {/* Right Column: Queue Manager (7 cols) */}
-        <div className="lg:col-span-7 bg-card border border-surface-border rounded-xl p-5 space-y-4 shadow-xl">
+        <div className="lg:col-span-7 obsidian-panel rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-surface-border pb-3">
             <h2 className="text-sm font-semibold font-heading text-content-primary flex items-center gap-2">
               <ListMusic size={18} className="text-brand-amber" />
@@ -220,7 +220,7 @@ export default function MusicPlayerPage() {
               value={newTrackInput}
               onChange={(e) => setNewTrackInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddTrack()}
-              className="flex-1 px-3 py-2 rounded-lg bg-surface border border-surface-border text-xs text-content-primary outline-none focus:border-brand-amber font-sans"
+              className="flex-1 px-3 py-2 rounded-lg obsidian-input border text-xs text-content-primary outline-none font-sans"
             />
             <button
               onClick={handleAddTrack}

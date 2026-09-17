@@ -37,17 +37,19 @@ export default function OverviewPage() {
       )}
 
       {/* Overview Title Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-border pb-4">
+      <div className="relative overflow-hidden rounded-2xl obsidian-panel px-5 py-5 sm:px-6 sm:py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-brand-purple/25 blur-3xl pointer-events-none" />
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold font-heading text-content-primary">
-            Overview Dashboard
+          <p className="mb-1 text-[10px] uppercase tracking-[.18em] font-mono text-brand-amber">Guild operations</p>
+          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-content-primary tracking-tight">
+            Signal, without the noise.
           </h1>
           <p className="text-xs sm:text-sm text-content-secondary mt-1 font-sans">
-            Real-time guild telemetry and active module status for <span className="text-brand-amber font-mono">guildcraft.gg</span>
+            Live telemetry and controls for <span className="text-brand-amber font-mono">guildcraft.gg</span>
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="text-xs px-3 py-1.5 rounded-lg bg-surface border border-surface-border font-mono text-content-secondary">
+          <div className="relative text-xs px-3 py-2 rounded-lg bg-[#0a1122]/70 border border-surface-border font-mono text-content-secondary shadow-[inset_0_1px_rgba(0,0,0,.3)]">
             Active Modules: <span className="text-brand-amber font-bold">{activeCount} / {MOCK_MODULES.length}</span>
           </div>
         </div>

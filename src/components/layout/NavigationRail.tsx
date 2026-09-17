@@ -30,14 +30,14 @@ export const NavigationRail: React.FC = () => {
 
   return (
     <aside
-      className="hidden md:flex flex-col items-center py-4 gap-1.5 z-20 w-[52px] min-w-[52px] bg-sidebar border-r border-surface-border"
+      className="hidden md:flex flex-col items-center py-4 gap-1.5 z-20 w-[68px] min-w-[68px] bg-sidebar border-r border-black/40 shadow-[8px_0_28px_rgba(0,0,0,.16)]"
     >
       {/* Server avatar */}
       <div className="mb-3 flex flex-col items-center gap-1.5">
         <Link
           href="/"
           title="BotHQ - GuildCraft.gg"
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold bg-gradient-to-br from-brand-amber to-amber-600 text-background font-heading transition-all duration-200 hover:rounded-lg shadow-glow"
+          className="w-10 h-10 rounded-[14px] flex items-center justify-center text-sm font-bold bg-gradient-to-br from-brand-amber to-[#1a9fca] text-[#07131b] font-heading transition-all duration-200 hover:rounded-[11px] hover:-translate-y-0.5 shadow-glow"
         >
           B
         </Link>
@@ -54,19 +54,19 @@ export const NavigationRail: React.FC = () => {
               href={href}
               title={label}
               className={cn(
-                "relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 group",
+                "relative w-10 h-10 rounded-[13px] flex items-center justify-center transition-all duration-150 group hover:rounded-[11px]",
                 isActive
-                  ? "bg-brand-amber/15 text-brand-amber"
+                  ? "bg-brand-amber text-white shadow-glow"
                   : "text-content-secondary hover:text-content-primary hover:bg-surface"
               )}
             >
               {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-brand-amber rounded-r shadow-[0_0_6px_#F2A93B]" />
+                <span className="absolute -left-[14px] top-1/2 -translate-y-1/2 w-1 h-5 bg-white rounded-r" />
               )}
               <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
               
               {/* Tooltip */}
-              <span className="absolute left-12 bg-card border border-surface-border text-content-primary text-xs px-2.5 py-1 rounded pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 font-sans shadow-lg">
+              <span className="absolute left-[52px] bg-[#0d1426] border border-surface-border text-content-primary text-xs px-2.5 py-1.5 rounded-md pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 font-sans shadow-lg">
                 {label}
               </span>
             </Link>

@@ -31,9 +31,9 @@ export const StatCard: React.FC<StatCardProps> = ({
   const gradientId = `sparkline-${label.replace(/\s+/g, "-").toLowerCase()}`;
 
   return (
-    <div className="rounded-xl p-4 bg-card border border-surface-border flex flex-col gap-3 hover:border-surface-border/60 transition-colors">
+    <div className="rounded-xl p-4 obsidian-panel flex flex-col gap-3 transition-all duration-200 hover:-translate-y-0.5">
       <div className="flex items-center justify-between">
-        <span className="text-xs uppercase tracking-wider font-sans text-content-secondary font-medium">
+        <span className="text-[10px] uppercase tracking-[0.14em] font-mono text-content-tertiary font-medium">
           {label}
         </span>
         <div className="w-16 h-7">

@@ -1,24 +1,41 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { ModuleCard } from "@/components/dashboard/ModuleCard";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { StatCardSkeleton, ModuleCardSkeleton } from "@/components/ui/Skeletons";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { useStats } from "@/hooks/use-stats";
+import { useGuildConfig } from "@/hooks/use-guild-config";
 import { MOCK_MODULES, MOCK_ACTIVITIES } from "@/lib/mock-data";
+import { formatNumber } from "@/lib/utils";
 
 export default function OverviewPage() {
-  const [moduleStates, setModuleStates] = useState<Record<string, boolean>>(
-    Object.fromEntries(MOCK_MODULES.map((m) => [m.id, m.defaultOn]))
-  );
+  const stats = useStats();
+  const config = useGuildConfig();
 
-  const toggleModule = (id: string) => {
-    setModuleStates((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  // Derive module on/off states from the API config, falling back to mock defaults
+  const moduleStates: Record<string, boolean> = (() => {
+    const apiModules = config.data?.config?.settings?.modules;
+    if (apiModules) return apiModules;
+    return Object.fromEntries(MOCK_MODULES.map((m) => [m.id, m.defaultOn]));
+  })();
 
   const activeCount = Object.values(moduleStates).filter(Boolean).length;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
+      {/* Fallback banner when running without a database */}
+      {(stats.isFallback || config.isFallback) && (
+        <ErrorBanner
+          message="API unreachable — showing demo data. Start Postgres and seed the database for live data."
+          isFallback
+          onRetry={() => { stats.refetch(); config.refetch(); }}
+        />
+      )}
+
       {/* Overview Title Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-border pb-4">
         <div>
@@ -38,38 +55,48 @@ export default function OverviewPage() {
 
       {/* Top Telemetry Stat Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Members"
-          value="4,218"
-          delta="+83 (+2.0%)"
-          positive={true}
-          color="#4FC9AE"
-          sub="184 currently online"
-        />
-        <StatCard
-          label="Messages / day"
-          value="2,941"
-          delta="+12.4%"
-          positive={true}
-          color="#F2A93B"
-          sub="Peak: 420 msgs/hr"
-        />
-        <StatCard
-          label="Mod Actions"
-          value="47"
-          delta="-18.3%"
-          positive={false}
-          color="#E03E3E"
-          sub="Past 24 hours"
-        />
-        <StatCard
-          label="Open Tickets"
-          value="9"
-          delta="+3 pending"
-          positive={false}
-          color="#7B6CF6"
-          sub="Avg resolution: 14m"
-        />
+        {stats.isLoading ? (
+          <>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <StatCardSkeleton key={i} />
+            ))}
+          </>
+        ) : (
+          <>
+            <StatCard
+              label="Members"
+              value={formatNumber(stats.data?.members.total ?? 0)}
+              delta="+83 (+2.0%)"
+              positive={true}
+              color="#4FC9AE"
+              sub="Total tracked members"
+            />
+            <StatCard
+              label="Messages / day"
+              value="2,941"
+              delta="+12.4%"
+              positive={true}
+              color="#F2A93B"
+              sub="Peak: 420 msgs/hr"
+            />
+            <StatCard
+              label="Mod Actions"
+              value={formatNumber(stats.data?.moderation.last24h ?? 0)}
+              delta={`${formatNumber(stats.data?.moderation.last7d ?? 0)} past 7d`}
+              positive={false}
+              color="#E03E3E"
+              sub="Past 24 hours"
+            />
+            <StatCard
+              label="Open Tickets"
+              value={String(stats.data?.tickets.open ?? 0)}
+              delta={`${stats.data?.giveaways.active ?? 0} active giveaways`}
+              positive={false}
+              color="#7B6CF6"
+              sub={`${stats.data?.automod.enabledRules ?? 0} auto-mod rules enabled`}
+            />
+          </>
+        )}
       </div>
 
       {/* Module Grid & Activity Feed Split */}
@@ -81,19 +108,25 @@ export default function OverviewPage() {
               Core Bot Modules
             </h2>
             <span className="text-[11px] font-mono text-content-tertiary">
-              Click toggles to update in real-time
+              {config.isMutating ? "Saving…" : "Click toggles to update in real-time"}
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {MOCK_MODULES.map((mod) => (
-              <ModuleCard
-                key={mod.id}
-                module={mod}
-                isOn={moduleStates[mod.id] ?? false}
-                onToggle={() => toggleModule(mod.id)}
-              />
-            ))}
+            {config.isLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <ModuleCardSkeleton key={i} />
+              ))
+            ) : (
+              MOCK_MODULES.map((mod) => (
+                <ModuleCard
+                  key={mod.id}
+                  module={mod}
+                  isOn={moduleStates[mod.id] ?? false}
+                  onToggle={() => config.toggleModule(mod.id)}
+                />
+              ))
+            )}
           </div>
         </div>
 

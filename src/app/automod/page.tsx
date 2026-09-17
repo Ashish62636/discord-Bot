@@ -4,14 +4,26 @@ import React, { useState } from "react";
 import { Plus, Trash2, Hash, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { Toggle } from "@/components/ui/Toggle";
 import { Modal } from "@/components/ui/Modal";
-import { MOCK_AUTOMOD_RULES } from "@/lib/mock-data";
-import { AutoModRule } from "@/types/dashboard";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { TableRowSkeleton } from "@/components/ui/Skeletons";
+import { useAutoMod } from "@/hooks/use-automod";
 
 const TRIGGERS = ["Spam", "Caps", "Links", "Mentions", "Profanity", "Repeated Chars"];
 const ACTIONS_LIST = ["Warn", "Delete", "Mute (1h)", "Mute (24h)", "Kick", "Ban"];
 
 export default function AutoModPage() {
-  const [rules, setRules] = useState<AutoModRule[]>(MOCK_AUTOMOD_RULES);
+  const {
+    data: rules,
+    isLoading,
+    error,
+    isFallback,
+    isMutating,
+    refetch,
+    toggleRule,
+    deleteRule,
+    createRule,
+  } = useAutoMod();
+
   const [exemptChannels, setExemptChannels] = useState([
     "staff-chat",
     "bot-commands",
@@ -31,30 +43,22 @@ export default function AutoModPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const toggleRule = (id: number) => {
-    setRules((rs) =>
-      rs.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r))
-    );
+  const handleToggleRule = async (id: string) => {
+    await toggleRule(id);
     showToast("Auto-mod rule updated!");
   };
 
-  const deleteRule = (id: number) => {
-    setRules((rs) => rs.filter((r) => r.id !== id));
+  const handleDeleteRule = async (id: string) => {
+    await deleteRule(id);
     showToast("Rule removed successfully");
   };
 
-  const addRule = () => {
-    const newId = Math.max(...rules.map((r) => r.id), 0) + 1;
-    setRules((rs) => [
-      ...rs,
-      {
-        id: newId,
-        trigger: newTrigger,
-        threshold: newThreshold,
-        action: newAction,
-        enabled: true,
-      },
-    ]);
+  const handleAddRule = async () => {
+    await createRule({
+      trigger: newTrigger,
+      threshold: newThreshold,
+      action: newAction,
+    });
     setShowAddModal(false);
     showToast("New auto-mod rule created!");
   };
@@ -74,7 +78,8 @@ export default function AutoModPage() {
     showToast(`Removed #${ch} from exempt channels`);
   };
 
-  const activeCount = rules.filter((r) => r.enabled).length;
+  const rulesList = rules ?? [];
+  const activeCount = rulesList.filter((r) => r.enabled).length;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
@@ -84,6 +89,15 @@ export default function AutoModPage() {
           <CheckCircle2 size={16} />
           <span>{toastMessage}</span>
         </div>
+      )}
+
+      {/* Fallback banner */}
+      {isFallback && (
+        <ErrorBanner
+          message="API unreachable — showing demo rules. Changes won't persist until the database is running."
+          isFallback
+          onRetry={refetch}
+        />
       )}
 
       {/* Header */}
@@ -99,7 +113,11 @@ export default function AutoModPage() {
         </div>
         <div className="flex items-center gap-3">
           <div className="text-xs font-mono text-content-secondary bg-surface px-3 py-1.5 rounded-lg border border-surface-border">
-            Active Rules: <span className="text-brand-teal font-bold">{activeCount} / {rules.length}</span>
+            {isMutating ? (
+              <span className="text-brand-amber">Saving…</span>
+            ) : (
+              <>Active Rules: <span className="text-brand-teal font-bold">{activeCount} / {rulesList.length}</span></>
+            )}
           </div>
           <button
             onClick={() => setShowAddModal(true)}
@@ -124,49 +142,59 @@ export default function AutoModPage() {
 
         {/* Rule Rows */}
         <div className="divide-y divide-surface-subtleBorder">
-          {rules.map((rule) => (
-            <div
-              key={rule.id}
-              className={`grid grid-cols-12 px-4 py-3.5 items-center transition-colors ${
-                rule.enabled ? "bg-card" : "bg-card-subtle/50 opacity-60"
-              }`}
-            >
-              {/* Trigger */}
-              <div className="col-span-3 sm:col-span-3 font-heading font-semibold text-sm text-content-primary">
-                {rule.trigger}
-              </div>
-
-              {/* Threshold */}
-              <div className="col-span-4 sm:col-span-3 font-mono text-xs text-content-secondary">
-                {rule.threshold}
-              </div>
-
-              {/* Action */}
-              <div className="col-span-3 sm:col-span-3 font-mono text-xs text-brand-teal">
-                {rule.action}
-              </div>
-
-              {/* Status Toggle */}
-              <div className="col-span-1 sm:col-span-2 flex justify-center">
-                <Toggle
-                  on={rule.enabled}
-                  onToggle={() => toggleRule(rule.id)}
-                  ariaLabel={`Toggle rule ${rule.trigger}`}
-                />
-              </div>
-
-              {/* Delete Button */}
-              <div className="col-span-1 flex justify-end">
-                <button
-                  onClick={() => deleteRule(rule.id)}
-                  className="p-1.5 rounded-lg text-content-tertiary hover:text-brand-red hover:bg-brand-red/10 transition-colors"
-                  aria-label="Delete rule"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRowSkeleton key={i} />
+            ))
+          ) : rulesList.length === 0 ? (
+            <div className="px-4 py-8 text-center text-content-secondary text-sm font-sans">
+              No auto-mod rules configured. Click <strong>Add Rule</strong> to get started.
             </div>
-          ))}
+          ) : (
+            rulesList.map((rule) => (
+              <div
+                key={rule.id}
+                className={`grid grid-cols-12 px-4 py-3.5 items-center transition-colors ${
+                  rule.enabled ? "bg-card" : "bg-card-subtle/50 opacity-60"
+                }`}
+              >
+                {/* Trigger */}
+                <div className="col-span-3 sm:col-span-3 font-heading font-semibold text-sm text-content-primary">
+                  {rule.trigger}
+                </div>
+
+                {/* Threshold */}
+                <div className="col-span-4 sm:col-span-3 font-mono text-xs text-content-secondary">
+                  {rule.threshold}
+                </div>
+
+                {/* Action */}
+                <div className="col-span-3 sm:col-span-3 font-mono text-xs text-brand-teal">
+                  {rule.action}
+                </div>
+
+                {/* Status Toggle */}
+                <div className="col-span-1 sm:col-span-2 flex justify-center">
+                  <Toggle
+                    on={rule.enabled}
+                    onToggle={() => handleToggleRule(rule.id)}
+                    ariaLabel={`Toggle rule ${rule.trigger}`}
+                  />
+                </div>
+
+                {/* Delete Button */}
+                <div className="col-span-1 flex justify-end">
+                  <button
+                    onClick={() => handleDeleteRule(rule.id)}
+                    className="p-1.5 rounded-lg text-content-tertiary hover:text-brand-red hover:bg-brand-red/10 transition-colors"
+                    aria-label="Delete rule"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -174,7 +202,7 @@ export default function AutoModPage() {
       <div className="bg-card border border-surface-border rounded-xl p-5 space-y-4">
         <div>
           <h2 className="text-sm font-semibold font-heading text-content-primary">
-            Exempt Channels & Bypasses
+            Exempt Channels &amp; Bypasses
           </h2>
           <p className="text-xs text-content-secondary mt-0.5">
             Auto-moderation rules will not execute on messages posted in these channels.
@@ -282,10 +310,11 @@ export default function AutoModPage() {
               Cancel
             </button>
             <button
-              onClick={addRule}
-              className="px-4 py-2 rounded-lg bg-brand-amber text-background font-heading font-semibold transition-all hover:brightness-110"
+              onClick={handleAddRule}
+              disabled={isMutating}
+              className="px-4 py-2 rounded-lg bg-brand-amber text-background font-heading font-semibold transition-all hover:brightness-110 disabled:opacity-50"
             >
-              Create Rule
+              {isMutating ? "Creating…" : "Create Rule"}
             </button>
           </div>
         </div>
